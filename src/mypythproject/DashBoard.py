@@ -11,10 +11,10 @@ from pybacktestchain.data_module import FirstTwoMoments
 from tickers import csv_to_ticker_dict
 import logging
 
-# Suppress yfinance error logs
+# Remove yfinance error logs
 logging.getLogger("yfinance").setLevel(logging.CRITICAL)
 
-# Dictionary mapping Symbol -> Security
+# Map the symbols in the dictionary to securities
 sp_dict = csv_to_ticker_dict()
 universe_options = [
     {"label": security, "value": symbol} for symbol, security in sp_dict.items()
@@ -24,7 +24,7 @@ universe_options = [
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
-    html.H1("Backtest Portfolio Value", style={'marginBottom': '20px'}),
+    html.H1("Python Project - Backtest Portfolio Value", style={'marginBottom': '20px'}),
 
     html.Div([
         html.Label("Initial Date:"),
@@ -45,7 +45,7 @@ app.layout = html.Div([
     ], style={'marginBottom': '20px'}),
 
     html.Div([
-        html.Label("Information Class:"),
+        html.Label("Optimization Technique:"),
         dcc.Dropdown(
             id='information-class',
             options=[
@@ -73,19 +73,15 @@ app.layout = html.Div([
     html.Button("Run Backtest", id='run-button', n_clicks=0, 
                 style={'marginTop': '20px', 'marginBottom': '20px'}),
 
-    # 1) Table BEFORE the portfolio plot
     html.Div([
         html.H3("Portfolio Summary"),
         dash_table.DataTable(id='portfolio-summary-table', style_table={'overflowX': 'auto'})
     ], style={'marginTop': '40px'}),
 
-    # 2) Correlation graph
     dcc.Graph(id='correlation-graph', style={'marginTop': '40px'}),
 
-    # 3) Portfolio Value Plot
     dcc.Graph(id='portfolio-value-graph', style={'marginTop': '40px'}),
 
-    # 4) Table of average return and other stats
     html.Div([
         html.H3("Statistics (Daily Returns)"),
         dash_table.DataTable(
@@ -98,14 +94,10 @@ app.layout = html.Div([
 
 @app.callback(
     [
-        # Portfolio table outputs
         Output('portfolio-summary-table', 'data'),
         Output('portfolio-summary-table', 'columns'),
-        # Correlation graph output
         Output('correlation-graph', 'figure'),
-        # Portfolio value plot output
         Output('portfolio-value-graph', 'figure'),
-        # Stats table outputs
         Output('stats-table', 'data'),
         Output('stats-table', 'columns')
     ],
@@ -222,7 +214,6 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
             "Value": position.quantity * final_market_prices[ticker]
         })
 
-    # Add total row
     total_value = sum(item["Value"] for item in summary_data) + broker.cash
     summary_data.append({
         "Ticker": "Total",
@@ -255,11 +246,10 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
     # Drop any days that are all NaN
     price_df.dropna(how='all', inplace=True)
 
-    # Compute daily returns and then correlation matrix
+    # Compute daily returns and then plot correlation heatmap
     ret_df = price_df.pct_change().dropna()
     if not ret_df.empty:
         corr_matrix = ret_df.corr()
-        # Plotly heatmap with -1=red, 1=green
         corr_fig = go.Figure(
             data=go.Heatmap(
                 z=corr_matrix.values,
@@ -270,16 +260,14 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
                 zmax=1
             )
         )
-        corr_fig.update_layout(title="Correlation Matrix of Daily Returns")
+        corr_fig.update_layout(title="Correlation Heatmap of Daily Returns")
     else:
-        # Empty figure if no data
         corr_fig = go.Figure()
 
     # -------------------------
     # 4) PORTFOLIO VALUE GRAPH
     # -------------------------
     df_portfolio = pd.DataFrame(portfolio_values, columns=['Date', 'Portfolio Value'])
-
     fig_portfolio = go.Figure()
     fig_portfolio.add_trace(
         go.Scatter(
@@ -289,7 +277,7 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
             name='Portfolio Value'
         )
     )
-    # Example: add a reference line at 1M
+    # Add a reference line at 1M
     fig_portfolio.add_trace(
         go.Scatter(
             x=df_portfolio['Date'],
@@ -301,7 +289,6 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
     )
     # Mark rebalancing points
     for reb_date in rebalance_dates:
-        # This plots a marker on the day before rebalance
         marker_day = reb_date - timedelta(days=1)
         val = df_portfolio.loc[df_portfolio['Date'] == marker_day, 'Portfolio Value']
         if not val.empty:
@@ -323,10 +310,9 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
     # -------------------------
     # 5) STATISTICS TABLE
     # -------------------------
-    # Example: average daily return (%) and std dev for each selected ticker
     stats_data = []
     if not ret_df.empty:
-        # Per-ticker stats
+        # Per-ticker stats:
         for symbol in ret_df.columns:
             avg_return = ret_df[symbol].mean() * 100
             std_return = ret_df[symbol].std() * 100
@@ -336,7 +322,7 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
                 'Std Dev (%)': round(std_return, 2)
             })
     
-    # Entire portfolio stats, using df_portfolio data
+    # Entire portfolio stats:
     if len(df_portfolio) > 1:
         df_portfolio['Daily Return'] = df_portfolio['Portfolio Value'].pct_change()
         # Drop the first row (NaN return)
@@ -357,16 +343,14 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
         {'name': 'Std Dev (%)', 'id': 'Std Dev (%)'}
     ]
 
-    # Return all outputs in correct order
     return (
-        summary_data,             # portfolio-summary-table data
-        summary_columns,          # portfolio-summary-table columns
-        corr_fig,                 # correlation-graph figure
-        fig_portfolio,            # portfolio-value-graph figure
-        stats_data,               # stats-table data
-        stats_columns             # stats-table columns
+        summary_data,             
+        summary_columns,         
+        corr_fig,                 
+        fig_portfolio,            
+        stats_data,               
+        stats_columns            
     )
-
 
 if __name__ == '__main__':
     app.run_server(debug=True)
