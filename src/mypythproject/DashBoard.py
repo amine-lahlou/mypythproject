@@ -10,6 +10,8 @@ from optimization_techniques import MaxSharpe, MinVariance, MaxReturn
 from pybacktestchain.data_module import FirstTwoMoments
 from tickers import csv_to_ticker_dict
 import logging
+import random
+import string
 
 # Remove yfinance error logs
 logging.getLogger("yfinance").setLevel(logging.CRITICAL)
@@ -74,7 +76,7 @@ app.layout = html.Div([
                 style={'marginTop': '20px', 'marginBottom': '20px'}),
 
     html.Div([
-        html.H3("Portfolio Summary"),
+        html.H3("Final Portfolio Summary"),
         dash_table.DataTable(id='portfolio-summary-table', style_table={'overflowX': 'auto'})
     ], style={'marginTop': '40px'}),
 
@@ -107,8 +109,8 @@ app.layout = html.Div([
     State('information-class', 'value'),
     State('universe-dropdown', 'value')
 )
+
 def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str, selected_symbols):
-    # If no button clicks yet, return placeholders
     if n_clicks == 0:
         return [], [], go.Figure(), go.Figure(), [], []
 
@@ -131,12 +133,12 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
         final_date=final_date,
         information_class=information_class,
         risk_model=StopLoss,
-        name_blockchain='backtest',
+        name_blockchain='backtest_' + ''.join(random.choices(string.ascii_lowercase + string.digits, k=5)),
         verbose=False
     )
     backtest.universe = selected_symbols
-    backtest.run_backtest()
 
+    backtest.run_backtest()
     broker = Broker(cash=1_000_000, verbose=False)
 
     # Transaction log from the backtest
@@ -232,8 +234,7 @@ def run_backtest(n_clicks, init_date_str, final_date_str, information_class_str,
     # -------------------------
     # 3) CORRELATION GRAPH
     # -------------------------
-    # Build a DataFrame of daily closes for each selected symbol
-    # so we can compute daily returns and correlation.
+    # Build a DataFrame of daily closes for each selected symbol so we can compute daily returns and correlation.
     price_df = pd.DataFrame()
     for symbol in selected_symbols:
         data = get_stock_data(symbol, init_date_str, final_date_str)
