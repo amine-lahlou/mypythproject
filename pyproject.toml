@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "mypythproject"
-version = "0.1.0"
+version = "0.1.1"
 description = "An extension of pybacktestchain that enhances portfolio optimization and backtesting with advanced features."
 authors = ["Amine Lahlou"]
 license = "MIT"

@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v0.1.1 (2025-01-15)
+
+### Bug Fixes
+
+- Fix some bugs
+  ([`27b5c50`](https://github.com/amine-lahlou/mypythproject/commit/27b5c50a1135917708cb561c08ea1c032eb2f84e))
+
+
 ## v0.1.0 (2025-01-11)
 
 ### Features
