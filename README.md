@@ -1,6 +1,6 @@
 # mypythproject
 
-An extension of pybacktestchain that enhances portfolio optimization and backtesting with advanced features.
+An extension of pybacktestchain that allows portfolio optimization with three methods, enables backtesting on the entire S&P500 universe, and generates an interactive dashboard for analysis.
 
 ## Installation
 
